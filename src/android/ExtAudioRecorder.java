@@ -264,11 +264,12 @@ public class ExtAudioRecorder
 		{
 			if (state == State.INITIALIZING)
 			{
-				if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+				filePath = "/data/data/" + handler.cordova.getActivity().getPackageName() + "/files/files" + argPath;
+				/*if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 					filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + argPath;
 		        } else {
 		        	filePath = "/data/data/" + handler.cordova.getActivity().getPackageName() + argPath;
-		        }
+		        }*/
 			}
 		}
 		catch (Exception e)
