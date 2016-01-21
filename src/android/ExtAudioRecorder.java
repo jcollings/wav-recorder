@@ -73,6 +73,7 @@ public class ExtAudioRecorder
 	
 	// Output file path
 	private String          filePath = null;
+	private String 			cacheFilePath = null;
 	
 	// Recorder state; see State
 	private State          	state;
@@ -265,6 +266,7 @@ public class ExtAudioRecorder
 			if (state == State.INITIALIZING)
 			{
 				filePath = "/data/data/" + handler.cordova.getActivity().getPackageName() + "/files/files" + argPath;
+				cacheFilePath = "/data/data/" + handler.cordova.getActivity().getPackageName() + "/files/files" + argPath;
 				/*if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 					filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + argPath;
 		        } else {
@@ -488,6 +490,8 @@ public class ExtAudioRecorder
 			
 				randomAccessWriter.close();
 				randomAccessWriter = null;
+
+				this.generatePeaks();
 			}
 			catch(IOException e)
 			{
@@ -534,6 +538,146 @@ public class ExtAudioRecorder
 	
 	public String getFilePath() {
 		return filePath;
+	}
+
+	private static WaveHeader waveHeader;
+
+	private void generatePeaks(){
+
+		// remove .wav and replace with -cache.json
+		cacheFilePath = cacheFilePath.substring(0, (cacheFilePath.length() - 4)) + "-cache.json";
+		File file = new File(filePath);
+		File cFile = new File(cacheFilePath);
+		double trackDuration = waveHeader.getNumBytes() / ( waveHeader.getSampleRate() * waveHeader.getNumChannels() * waveHeader.getBitsPerSample() / 8 );
+
+		int[] data = getAudioInputData(file);
+		int[] output = generatePeaksData(data, (int)trackDuration * 100); // 100 lines per second
+
+		saveJSON(output, cFile);
+	}
+
+	private static int[] getAudioInputData(File file){
+
+		try {
+
+			InputStream inputStream = new FileInputStream(file);
+			waveHeader = new WaveHeader();
+			waveHeader.read(inputStream);
+			byte[] bytes = streamToByteArray(inputStream);
+
+			int numChannels = waveHeader.getNumChannels();
+			int frameSize = (int) waveHeader.getBitsPerSample() / 8;
+			int frameLength = waveHeader.getNumBytes() / numChannels / frameSize; // waveHeader.getBitsPerSample() * numChannels;
+			int[][] toReturn = new int[numChannels][frameLength];
+			int sampleIndex = 0;
+
+			for (int t = 0; t < bytes.length;) {
+				for (int channel = 0; channel < numChannels; channel++) {
+					int low = (int) bytes[t];
+					t++;
+					int high = (int) bytes[t];
+					t++;
+					int sample = getSixteenBitSample(high, low);
+					toReturn[channel][sampleIndex] = sample;
+				}
+				sampleIndex++;
+			}
+
+			return  toReturn[0];
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	public static int[] generatePeaksData( int[] data, int canvasWidth){
+		int segmentSize = data.length / canvasWidth;
+		int[] output = new int[canvasWidth];
+
+		for(int i =0; i< canvasWidth; i++){
+
+			List<Integer> positive = new ArrayList<Integer>();
+			List<Integer> negative = new ArrayList<Integer>();
+
+			for(int j = 0; j < segmentSize; j++){
+
+				int key = i*segmentSize;
+				if(data[key+j] > 0){
+					positive.add(data[key+j]);
+				}else{
+					negative.add(data[key+j]);
+				}
+			}
+
+			if(positive.size() > negative.size()) {
+				output[i] = mean(positive);
+			}else{
+				output[i] = mean(negative);
+			}
+		}
+
+		return output;
+	}
+
+	public static void  saveJSON(int[] data, File file){
+
+		try {
+
+			OutputStream outputStream = new FileOutputStream(file);
+
+			Writer writer = new OutputStreamWriter(outputStream, "UTF-8");
+
+			writer.write("[");
+
+			for(int i = 0; i < data.length; i++){
+
+				if(i > 0) {
+					writer.write(",");
+				}
+
+				double temp = data[i];
+				writer.write("\"" + ( temp / 22050 ) + "\"");
+			}
+
+			writer.write("]");
+
+			writer.flush();
+			writer.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+
+	public static int mean(List m) {
+
+		int sum = 0;
+		for (int i = 0; i < m.size(); i++) {
+			sum += (Integer)m.get(i);
+		}
+		return sum / m.size();
+	}
+
+	private static int getSixteenBitSample(int high, int low) {
+		return (high << 8) + (low & 0x00ff);
+	}
+
+	public static byte[] streamToByteArray(InputStream stream) throws IOException {
+
+		byte[] buffer = new byte[1024];
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+		int line = 0;
+		// read bytes from stream, and store them in buffer
+		while ((line = stream.read(buffer)) != -1) {
+			// Writes bytes from byte array (buffer) into output stream.
+			os.write(buffer, 0, line);
+		}
+		stream.close();
+		os.flush();
+		os.close();
+		return os.toByteArray();
 	}
 	
 }
