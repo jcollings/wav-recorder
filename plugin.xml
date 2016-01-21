@@ -21,6 +21,7 @@
 
         <source-file src="src/android/WAVRecorder.java" target-dir="src/ro/martinescu/audio" />
         <source-file src="src/android/ExtAudioRecorder.java" target-dir="src/ro/martinescu/audio" />
+        <source-file src="src/android/WaveHeader.java" target-dir="src/ro/martinescu/audio" />
 
         <js-module src="www/android/wavrecorder.js" name="WAVRecorder">
             <clobbers target="window.martinescu.Recorder"/>
