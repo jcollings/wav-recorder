@@ -557,9 +557,9 @@ public class ExtAudioRecorder
 		cacheFilePath = cacheFilePath.substring(0, (cacheFilePath.length() - 4)) + "-cache.json";
 		File file = new File(filePath);
 		File cFile = new File(cacheFilePath);
+		int[] data = getAudioInputData(file);
 		double trackDuration = waveHeader.getNumBytes() / ( waveHeader.getSampleRate() * waveHeader.getNumChannels() * waveHeader.getBitsPerSample() / 8 );
 
-		int[] data = getAudioInputData(file);
 		int[] output = generatePeaksData(data, (int)trackDuration * 100); // 100 lines per second
 
 		saveJSON(output, cFile);
