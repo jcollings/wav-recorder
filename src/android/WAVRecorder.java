@@ -34,6 +34,17 @@ public class WAVRecorder extends CordovaPlugin {
             callbackContext.sendPluginResult(new PluginResult(status, back));
             return true;
         }
+        else if(action.equals("getAudioRecordingLevels")){
+
+            String id = args.getString(0);
+            ExtAudioRecorder audio = this.players.get(id);
+            if (audio != null) {
+                int amplitude = audio.getMaxAmplitude();
+                callbackContext.sendPluginResult( new PluginResult( PluginResult.Status.OK, amplitude) );
+                return true;
+            }
+
+        }
         else if (action.equals("create")) {
             String id = args.getString(0);
             String target = args.getString(1);

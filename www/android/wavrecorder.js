@@ -78,6 +78,13 @@ Recorder.prototype.location = function() {
 };
 
 /**
+ * Get Audio Levels
+ */
+Recorder.prototype.getRecordLevels = function(success, fail) {
+  exec(success,fail, "WAVRecorder", "getAudioRecordingLevels", [this.id]);
+};
+
+/**
  * Audio has status update.
  * PRIVATE
  *
