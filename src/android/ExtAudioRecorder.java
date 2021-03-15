@@ -274,8 +274,14 @@ public class ExtAudioRecorder
 		{
 			if (state == State.INITIALIZING)
 			{
-				filePath = "/data/data/" + handler.cordova.getActivity().getPackageName() + "/files/files" + argPath;
-				cacheFilePath = "/data/data/" + handler.cordova.getActivity().getPackageName() + "/files/files" + argPath;
+				// capacitor
+				filePath = argPath;
+				cacheFilePath = argPath;
+				
+				// cordova old
+				// filePath = "/data/data/" + handler.cordova.getActivity().getPackageName() + "/files/files" + argPath;
+				// cacheFilePath = "/data/data/" + handler.cordova.getActivity().getPackageName() + "/files/files" + argPath;
+				
 				/*if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
 					filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + argPath;
 		        } else {
